@@ -1,0 +1,31 @@
+To do Framework :
+
+    ** Sprint 0 : 
+        Objectif : N'importe quel url saisie dans le test passe 
+        dans la fonction processRequest puis donne (localhost/.../url_Saisie)
+
+        -FrontCOntrollerServlet 
+            -doGet et doPost -> appel un processRequest() -> out.print(url)
+            -script de deploiement .jar (convertis le framework en jar)
+            -faire des test (le .jar dans le test)
+
+        -Exercice : 
+            Spring MVC, webAPI
+            controlleur 
+            class EmpController annoter
+            @Controller
+                @getmapping
+            methode lister 
+
+            (@requestapping)   
+
+            ModelAndView
+
+            test class controlleur noter par notre propre annotation
+
+            ** apprendre l'annotation : creation d'une annotation, recuperation,
+            existance(class, methode, attribut), packaging (comme tous les packaging mais special)
+            les variables necessaires    
+
+            dans le projet de test : creation d'une annotation, place,
+            comment, test dans une class et main => au moment de l'annotation     
