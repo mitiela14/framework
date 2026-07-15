@@ -29,3 +29,34 @@ To do Framework :
 
             dans le projet de test : creation d'une annotation, place,
             comment, test dans une class et main => au moment de l'annotation     
+
+   *Exercice : 
+        Spring mvc , web api 
+        controlleur ,
+        class EmpController annoter 
+        @Controller
+            @getmapping
+        methode lister
+         
+        (@requestmapping)  
+
+        MedelAndView 
+
+        test class controller noter par notre propre annotation , 
+
+       ** mianatra  annotation , creation d'un annotation , recuperation , existance (class ,methode ,attribut fomba ametrahana annotation ) mila package (otrany package fa special fotsiny ny annotation ) inon daoly ny variable ilaina aminy 
+
+       ao projet de test : creation de du annotation , place , aiza , comment , test dans une class et main  => au moment du annotation 
+
+
+
+    **Sprint1 :
+        but : creation de notre propre annotation : [ok]
+        on a deux choix donc dans un bout de code : 
+            -utiliser au demarrage du application (utiliser listener )
+            ou - au premiere applle frontControllerServlet(on uilisant init)
+                    FrontControllerServlet : list<String> listController 
+                        init() {recuperer parametre web.xml}
+                            annotation controller : -all / package 
+                        -annotation 
+                        -parcours 
