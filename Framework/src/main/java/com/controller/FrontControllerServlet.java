@@ -8,36 +8,53 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+import com.exception.UrlNotFoundException;
+import com.model.Mapping;
 import com.utils.ControllerScanner;
+import com.utils.RouteLoader;
 
-/* SPRINT 1 : au demarrage (init), il scanne le package des controleurs
- *            et garde la liste des classes annotees @AnnotationController.
- */
+
 public class FrontControllerServlet extends HttpServlet {
 
-
-    private List<String> listController = new ArrayList<>();
-
+    private List<String> listController = new ArrayList<>();      // Sprint 1
+    private Map<String, Mapping> routes = new TreeMap<>();         // Sprint 2 : URL -> Mapping
 
     @Override
     public void init() throws ServletException {
-        // 1. Lire le parametre defini dans web.xml
         String packages = getServletContext().getInitParameter("packageControllers");
         if (packages == null || packages.trim().isEmpty()) {
             throw new ServletException(
                 "Parametre 'packageControllers' manquant dans web.xml");
         }
 
-        // 2. Scanner les packages et remplir la liste
         try {
+            // Sprint 1 : quelles classes sont des controleurs ?
             this.listController = ControllerScanner.findControllers(packages);
+            // Sprint 2 : quelles methodes de ces controleurs ont une URL ?
+            this.routes = RouteLoader.buildRoutes(listController);
         } catch (Exception e) {
-            throw new ServletException("Erreur pendant le scan des controleurs", e);
+            // inclut DuplicateUrlException : l'application refuse de demarrer
+            throw new ServletException("Erreur pendant l'initialisation du framework : "
+                    + e.getMessage(), e);
         }
 
-        // 3. Verification dans la console de Tomcat
-        System.out.println("[Sprint1] Controleurs trouves : " + listController);
+        System.out.println("[Sprint2] Controleurs trouves : " + listController);
+        System.out.println("[Sprint2] Routes enregistrees :");
+        for (Map.Entry<String, Mapping> route : routes.entrySet()) {
+            System.out.println("   " + route.getKey() + "  ->  " + route.getValue());
+        }
+    }
+
+    // Cherche l'URL dans la table ; la LANCE en erreur si elle n'y est pas
+    private Mapping findMapping(String url) throws UrlNotFoundException {
+        Mapping mapping = routes.get(url);
+        if (mapping == null) {
+            throw new UrlNotFoundException(url);
+        }
+        return mapping;
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -47,14 +64,32 @@ public class FrontControllerServlet extends HttpServlet {
 
         String url = request.getRequestURI().substring(request.getContextPath().length());
 
+        // 1. Chercher la route AVANT d'ecrire (le code HTTP doit etre fixe avant la reponse)
+        Mapping mapping = null;
+        String erreur = null;
+        try {
+            mapping = findMapping(url);
+        } catch (UrlNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);   // 404
+            erreur = e.getMessage();
+        }
+
+        // 2. Ecrire la reponse
         try (PrintWriter out = response.getWriter()) {
             out.println("<h2>FrontController servlet</h2>");
             out.println("<p><strong>URL saisie :</strong> " + url + "</p>");
 
-            out.println("<h3>Controleurs detectes (" + listController.size() + ")</h3>");
+            if (mapping != null) {
+                out.println("<p><strong>Controleur :</strong> " + mapping.getClassName() + "</p>");
+                out.println("<p><strong>Methode :</strong> " + mapping.getMethod() + "()</p>");
+            } else {
+                out.println("<p style=\"color:red\">" + erreur + "</p>");
+            }
+
+            out.println("<h3>Routes enregistrees (" + routes.size() + ")</h3>");
             out.println("<ul>");
-            for (String controller : listController) {
-                out.println("<li>" + controller + "</li>");
+            for (Map.Entry<String, Mapping> route : routes.entrySet()) {
+                out.println("<li>" + route.getKey() + " &rarr; " + route.getValue() + "</li>");
             }
             out.println("</ul>");
         }
