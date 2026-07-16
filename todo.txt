@@ -30,25 +30,6 @@ To do Framework :
             dans le projet de test : creation d'une annotation, place,
             comment, test dans une class et main => au moment de l'annotation     
 
-   *Exercice : 
-        Spring mvc , web api 
-        controlleur ,
-        class EmpController annoter 
-        @Controller
-            @getmapping
-        methode lister
-         
-        (@requestmapping)  
-
-        MedelAndView 
-
-        test class controller noter par notre propre annotation , 
-
-       ** mianatra  annotation , creation d'un annotation , recuperation , existance (class ,methode ,attribut fomba ametrahana annotation ) mila package (otrany package fa special fotsiny ny annotation ) inon daoly ny variable ilaina aminy 
-
-       ao projet de test : creation de du annotation , place , aiza , comment , test dans une class et main  => au moment du annotation 
-
-
 
     **Sprint1 :
         but : creation de notre propre annotation : [ok]
@@ -60,3 +41,20 @@ To do Framework :
                             annotation controller : -all / package 
                         -annotation 
                         -parcours 
+
+    ** Sprint 2 :
+        url mandeha de fatatra ny methode sy controlleur asocier url iny 
+            creeation annotion type type , 
+            mila variable 
+
+            @controlleur
+            class EmpCOntroller 
+
+            url="emp/list
+            @urlmapping ('/emp/list')
+            liste(){  }
+
+            /emp/list
+            /emp/new EmpController->create 
+
+            rehefa tsy fatatra dia asina throw oe tsy fatatra le url 

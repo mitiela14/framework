@@ -1,42 +1,57 @@
 package exercice;
- 
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.TreeMap;
+
 public class Main {
 
-    public static void main(String[] args) throws Exception{
-        Class<?> cls = Etudiant.class;
+    // Ce que l'on retient pour chaque URL : la classe et la methode
+    static class Mapping {
+        String className;
+        String methodName;
+        Mapping(String className, String methodName) {
+            this.className = className;
+            this.methodName = methodName;
+        }
+        public String toString() { return className + "." + methodName + "()"; }
+    }
 
+    // ETAPE 1 : construire la table  URL -> Mapping
+    static Map<String, Mapping> construire(Class<?>... classes) {
+        Map<String, Mapping> table = new TreeMap<>();
+        for (Class<?> cls : classes) {
+            if (!cls.isAnnotationPresent(Controleur.class)) continue;   // pas un controleur : on saute
 
-        System.out.println("== Classe " + cls.getSimpleName());
-        System.out.println("@MonAnnotation presente ? " + cls.isAnnotationPresent(MonAnnotation.class));
-        System.out.println("@Invisible presente ?     " + cls.isAnnotationPresent(Invisible.class)
-                           + "   (Retention.CLASS => invisible a l'execution)");
-
-        // ---- 4. RECUPERATION de l'annotation et de ses valeurs
-        MonAnnotation a = cls.getAnnotation(MonAnnotation.class);
-        System.out.println("value = " + a.value() + " | priorite = " + a.priorite());
-
-        // ---- Sur les ATTRIBUTS
-        System.out.println("\n== Attributs");
-        for (Field f : cls.getDeclaredFields()) {
-            if (f.isAnnotationPresent(MonAnnotation.class)) {
-                MonAnnotation fa = f.getAnnotation(MonAnnotation.class);
-                System.out.println(f.getName() + " -> OUI : " + fa.value() + " (priorite " + fa.priorite() + ")");
-            } else {
-                System.out.println(f.getName() + " -> non");
+            for (Method m : cls.getDeclaredMethods()) {
+                if (m.isAnnotationPresent(UrlMapping.class)) {
+                    String url = m.getAnnotation(UrlMapping.class).value();   // lire la "variable"
+                    table.put(url, new Mapping(cls.getName(), m.getName()));
+                }
             }
         }
+        return table;
+    }
 
-        // ---- Sur les METHODES
-        System.out.println("\n== Methodes");
-        for (Method m : cls.getDeclaredMethods()) {
-            if (m.isAnnotationPresent(MonAnnotation.class)) {
-                MonAnnotation ma = m.getAnnotation(MonAnnotation.class);
-                System.out.println(m.getName() + " -> OUI : " + ma.value() + " (priorite " + ma.priorite() + ")");
-            } else {
-                System.out.println(m.getName() + " -> non");
+    // ETAPE 2 : chercher une URL ; si absente => on LANCE une exception
+    static Mapping trouver(Map<String, Mapping> table, String url) throws Exception {
+        Mapping m = table.get(url);
+        if (m == null) {
+            throw new Exception("URL non associee : " + url);
+        }
+        return m;
+    }
+
+    public static void main(String[] args) {
+        Map<String, Mapping> table = construire(EmpController.class, Divers.class);
+        System.out.println("Table : " + table + "\n");
+
+        String[] essais = { "/emp/list", "/emp/new", "/divers/test", "/emp/zzz" };
+        for (String url : essais) {
+            try {
+                System.out.println(url + "  ->  " + trouver(table, url));
+            } catch (Exception e) {
+                System.out.println(url + "  ->  ERREUR : " + e.getMessage());
             }
         }
     }

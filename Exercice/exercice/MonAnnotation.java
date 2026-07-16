@@ -1,15 +1,15 @@
-package exercice;
+// package exercice;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+// import java.lang.annotation.ElementType;
+// import java.lang.annotation.Retention;
+// import java.lang.annotation.RetentionPolicy;
+// import java.lang.annotation.Target;
 
 
 
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface MonAnnotation {
-    String value() default  "";   //ses "variables" (attributs)
-    int priorite() default 0;
-}
+// @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+// @Retention(RetentionPolicy.RUNTIME)
+// public @interface MonAnnotation {
+//     String value() default  "";   //ses "variables" (attributs)
+//     int priorite() default 0;
+// }
