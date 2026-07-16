@@ -1,15 +1,15 @@
-package exercice; 
+// package exercice; 
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+// import java.lang.annotation.ElementType;
+// import java.lang.annotation.Retention;
+// import java.lang.annotation.RetentionPolicy;
+// import java.lang.annotation.Target;
 
-//Pour comprendre @Retention : avec CLASS (et non RUNTIME),
-//la reflexioon ne la vois pas
+// //Pour comprendre @Retention : avec CLASS (et non RUNTIME),
+// //la reflexioon ne la vois pas
 
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.CLASS)
+// @Target({ElementType.TYPE})
+// @Retention(RetentionPolicy.CLASS)
 
-public @interface Invisible {
-}
+// public @interface Invisible {
+// }
