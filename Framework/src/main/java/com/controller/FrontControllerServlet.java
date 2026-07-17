@@ -10,17 +10,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.HashMap;
+import java.util.Comparator;
 
 import com.exception.UrlNotFoundException;
 import com.model.Mapping;
 import com.utils.ControllerScanner;
 import com.utils.RouteLoader;
+import com.model.UrlMethod;
 
 
 public class FrontControllerServlet extends HttpServlet {
 
     private List<String> listController = new ArrayList<>();      // Sprint 1
-    private Map<String, Mapping> routes = new TreeMap<>();         // Sprint 2 : URL -> Mapping
+    private Map<UrlMethod, Mapping> routes = new HashMap<>();         // Sprint 2 : URL -> Mapping
 
     @Override
     public void init() throws ServletException {
@@ -41,18 +44,26 @@ public class FrontControllerServlet extends HttpServlet {
                     + e.getMessage(), e);
         }
 
-        System.out.println("[Sprint2] Controleurs trouves : " + listController);
-        System.out.println("[Sprint2] Routes enregistrees :");
-        for (Map.Entry<String, Mapping> route : routes.entrySet()) {
+        System.out.println("[Sprint3] Controleurs trouves : " + listController);
+        System.out.println("[Sprint3] Routes enregistrees :");
+        for (Map.Entry<UrlMethod, Mapping> route : sortedRoutes()) {
             System.out.println("   " + route.getKey() + "  ->  " + route.getValue());
         }
     }
 
+    private List<Map.Entry<UrlMethod, Mapping>> sortedRoutes() {
+        List<Map.Entry<UrlMethod, Mapping>> list = new ArrayList<>(routes.entrySet());
+        list.sort(Comparator
+                .comparing((Map.Entry<UrlMethod, Mapping> e) -> e.getKey().getUrl())
+                .thenComparing(e -> e.getKey().getMethod()));
+        return list;
+    }
+
     // Cherche l'URL dans la table ; la LANCE en erreur si elle n'y est pas
-    private Mapping findMapping(String url) throws UrlNotFoundException {
-        Mapping mapping = routes.get(url);
+    private Mapping findMapping(String url, String httpMethod) throws UrlNotFoundException {
+        Mapping mapping = routes.get(new UrlMethod(url, httpMethod));
         if (mapping == null) {
-            throw new UrlNotFoundException(url);
+            throw new UrlNotFoundException(url, httpMethod);
         }
         return mapping;
     }
@@ -63,12 +74,13 @@ public class FrontControllerServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
 
         String url = request.getRequestURI().substring(request.getContextPath().length());
+        String httpMethod = request.getMethod();
 
         // 1. Chercher la route AVANT d'ecrire (le code HTTP doit etre fixe avant la reponse)
         Mapping mapping = null;
         String erreur = null;
         try {
-            mapping = findMapping(url);
+            mapping = findMapping(url,httpMethod);
         } catch (UrlNotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);   // 404
             erreur = e.getMessage();
@@ -78,6 +90,7 @@ public class FrontControllerServlet extends HttpServlet {
         try (PrintWriter out = response.getWriter()) {
             out.println("<h2>FrontController servlet</h2>");
             out.println("<p><strong>URL saisie :</strong> " + url + "</p>");
+            out.println("<p><strong>Methode HTTP :</strong> " + httpMethod + "</p>");
 
             if (mapping != null) {
                 out.println("<p><strong>Controleur :</strong> " + mapping.getClassName() + "</p>");
@@ -88,7 +101,7 @@ public class FrontControllerServlet extends HttpServlet {
 
             out.println("<h3>Routes enregistrees (" + routes.size() + ")</h3>");
             out.println("<ul>");
-            for (Map.Entry<String, Mapping> route : routes.entrySet()) {
+            for (Map.Entry<UrlMethod, Mapping> route : sortedRoutes()) {
                 out.println("<li>" + route.getKey() + " &rarr; " + route.getValue() + "</li>");
             }
             out.println("</ul>");
