@@ -13,5 +13,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)  // visible par la reflexion
 public @interface UrlMapping {
     String value();
+    String method() default "GET";
 }
 
