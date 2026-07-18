@@ -79,3 +79,15 @@ To do Framework :
 
     - on boucle pour avoir  les contenus : class , method , 
     - on instancie et faits println 
+
+
+    *SprintSpecial : 
+        - implementation du context listener : init() premier appelle , 
+        au demarrage du application le demmarge efa 
+        listener , filter , servelet 
+        - 
+
+    *Sprint5 : 
+        - ModelandView 
+        - recuperer ModelandView de mis map de alaina ny url de cocatenena de dispatcherforward de donnes ao map , 
+    

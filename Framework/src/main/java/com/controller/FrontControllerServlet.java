@@ -1,5 +1,6 @@
 package com.controller;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -11,55 +12,38 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.Comparator;
 
 import com.exception.UrlNotFoundException;
 import com.model.Mapping;
 import com.model.UrlMethod;
-import com.utils.ControllerScanner;
 import com.utils.RouteLoader;
+
 
 public class FrontControllerServlet extends HttpServlet {
 
-    private List<String> listController = new ArrayList<>();      // Sprint 1
-    private Map<UrlMethod, Mapping> routes = new HashMap<>();         // Sprint 2 : URL -> Mapping
+    private List<String> listController = new ArrayList<>();
+    private Map<UrlMethod, Mapping> routes;
 
     @Override
+    @SuppressWarnings("unchecked")
     public void init() throws ServletException {
-        String packages = getServletContext().getInitParameter("packageControllers");
-        if (packages == null || packages.trim().isEmpty()) {
-            throw new ServletException(
-                "Parametre 'packageControllers' manquant dans web.xml");
+        System.out.println("[Servlet] Initialisation du FrontController");
+
+        ServletContext context = getServletContext();
+        this.routes = (Map<UrlMethod, Mapping>) context.getAttribute("mesRoutes");
+        List<String> controllers = (List<String>) context.getAttribute("listController");
+
+        if (this.routes == null) {
+            throw new ServletException("Le registre des routes n'a pas ete initialise au demarrage : "
+                    + "AppContextListener est-il declare dans web.xml ?");
+        }
+        if (controllers != null) {
+            this.listController = controllers;
         }
 
-        try {
-            // Sprint 1 : quelles classes sont des controleurs ?
-            this.listController = ControllerScanner.findControllers(packages);
-            // Sprint 2 : quelles methodes de ces controleurs ont une URL ?
-            this.routes = RouteLoader.buildRoutes(listController);
-        } catch (Exception e) {
-            // inclut DuplicateUrlException : l'application refuse de demarrer
-            throw new ServletException("Erreur pendant l'initialisation du framework : "
-                    + e.getMessage(), e);
-        }
-
-        System.out.println("[Sprint3] Controleurs trouves : " + listController);
-        System.out.println("[Sprint3] Routes enregistrees :");
-        for (Map.Entry<UrlMethod, Mapping> route : sortedRoutes()) {
-            System.out.println("   " + route.getKey() + "  ->  " + route.getValue());
-        }
+        System.out.println("[Servlet] " + routes.size() + " route(s) recuperee(s) depuis le ServletContext");
     }
 
-    private List<Map.Entry<UrlMethod, Mapping>> sortedRoutes() {
-        List<Map.Entry<UrlMethod, Mapping>> list = new ArrayList<>(routes.entrySet());
-        list.sort(Comparator
-                .comparing((Map.Entry<UrlMethod, Mapping> e) -> e.getKey().getUrl())
-                .thenComparing(e -> e.getKey().getMethod()));
-        return list;
-    }
-
-    // Cherche l'URL dans la table ; la LANCE en erreur si elle n'y est pas
     private Mapping findMapping(String url, String httpMethod) throws UrlNotFoundException {
         Mapping mapping = routes.get(new UrlMethod(url, httpMethod));
         if (mapping == null) {
@@ -74,15 +58,14 @@ public class FrontControllerServlet extends HttpServlet {
             Class<?> cls = Class.forName(mapping.getClassName(), true, loader);
             Object controller = cls.getDeclaredConstructor().newInstance();
             Method method = cls.getDeclaredMethod(mapping.getMethod());
-            System.out.println("   [Sprint3] Appel de " + mapping);
+            System.out.println("[Servlet] Appel de " + mapping);
             return method.invoke(controller);
-        } catch (InvocationTargetException e) {
 
+        } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             throw new ServletException("La methode " + mapping
                     + " a lance une exception : " + cause, cause);
         } catch (ReflectiveOperationException e) {
-
             throw new ServletException("Impossible d'invoquer " + mapping + " : " + e, e);
         }
     }
@@ -95,17 +78,17 @@ public class FrontControllerServlet extends HttpServlet {
         String url = request.getRequestURI().substring(request.getContextPath().length());
         String httpMethod = request.getMethod();
 
-        // 1. Chercher la route AVANT d'ecrire (le code HTTP doit etre fixe avant la reponse)
         Mapping mapping = null;
+        Object result = null;
         String erreur = null;
         try {
-            mapping = findMapping(url,httpMethod);
+            mapping = findMapping(url, httpMethod);
+            result = invokeController(mapping);
         } catch (UrlNotFoundException e) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);   // 404
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             erreur = e.getMessage();
         }
 
-        // 2. Ecrire la reponse
         try (PrintWriter out = response.getWriter()) {
             out.println("<h2>FrontController servlet</h2>");
             out.println("<p><strong>URL saisie :</strong> " + url + "</p>");
@@ -113,14 +96,19 @@ public class FrontControllerServlet extends HttpServlet {
 
             if (mapping != null) {
                 out.println("<p><strong>Controleur :</strong> " + mapping.getClassName() + "</p>");
-                out.println("<p><strong>Methode :</strong> " + mapping.getMethod() + "()</p>");
+                out.println("<p><strong>Methode executee :</strong> " + mapping.getMethod() + "()</p>");
+                if (result != null) {
+                    out.println("<p><strong>Valeur retournee :</strong> " + result + "</p>");
+                } else {
+                    out.println("<p><em>La methode ne retourne rien : regardez la console de Tomcat.</em></p>");
+                }
             } else {
                 out.println("<p style=\"color:red\">" + erreur + "</p>");
             }
 
             out.println("<h3>Routes enregistrees (" + routes.size() + ")</h3>");
             out.println("<ul>");
-            for (Map.Entry<UrlMethod, Mapping> route : sortedRoutes()) {
+            for (Map.Entry<UrlMethod, Mapping> route : RouteLoader.sorted(routes)) {
                 out.println("<li>" + route.getKey() + " &rarr; " + route.getValue() + "</li>");
             }
             out.println("</ul>");
