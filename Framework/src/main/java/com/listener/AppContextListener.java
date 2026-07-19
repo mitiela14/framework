@@ -34,6 +34,15 @@ public class AppContextListener implements ServletContextListener {
             context.setAttribute("listController", controllers);
             context.setAttribute("mesRoutes", routes);
 
+            // SPRINT 5 : ou se trouvent les vues ? (valeurs par defaut si web.xml ne dit rien)
+            String viewPrefix = context.getInitParameter("view-prefix");
+            String viewSuffix = context.getInitParameter("view-suffix");
+            if (viewPrefix == null) viewPrefix = "/WEB-INF/Views/";
+            if (viewSuffix == null) viewSuffix = ".jsp";
+            context.setAttribute("view-prefix", viewPrefix);
+            context.setAttribute("view-suffix", viewSuffix);
+            System.out.println("[Listener] Vues : prefixe='" + viewPrefix + "'  suffixe='" + viewSuffix + "'");
+
             System.out.println("[Listener] Controleurs trouves : " + controllers);
             System.out.println("[Listener] Routes enregistrees :");
             for (Map.Entry<UrlMethod, Mapping> route : RouteLoader.sorted(routes)) {
