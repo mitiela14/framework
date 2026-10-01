@@ -13,6 +13,11 @@ BUILD_DIR="build"
 LIB_DIR="lib"
 TOMCAT_WEBAPPS="${TOMCAT_WEBAPPS:-/home/elmitia/Documents/apache-tomcat-8.5.75/webapps}"
 
+if [ ! -f "$LIB_DIR/framework.jar" ]; then
+    echo "[ERREUR] lib/framework.jar introuvable : lancez d'abord Framework/build.sh"
+    exit 1
+fi
+
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR/WEB-INF/classes" "$BUILD_DIR/WEB-INF/lib"
 
