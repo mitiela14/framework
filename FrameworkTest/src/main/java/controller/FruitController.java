@@ -9,4 +9,8 @@ public class FruitController {
     @UrlMapping("/fruit/list")
     public void lister() {
     }
+
+    @UrlMapping(value="/fruit/ajouter", method="POST")
+    public void sauvegarder() {
+    }
 }

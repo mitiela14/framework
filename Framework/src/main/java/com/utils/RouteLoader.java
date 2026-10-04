@@ -4,18 +4,20 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.HashMap;
 
 import com.annotation.UrlMapping;
 import com.exception.DuplicateUrlException;
 import com.model.Mapping;
+import com.model.UrlMethod;
 
 
 public class RouteLoader {
 
-    public static Map<String, Mapping> buildRoutes(List<String> controllers) throws Exception {
+    public static Map<UrlMethod, Mapping> buildRoutes(List<String> controllers) throws Exception {
 
         // TreeMap : meme principe qu'une HashMap, mais triee par URL (affichage stable)
-        Map<String, Mapping> routes = new TreeMap<>();
+        Map<UrlMethod, Mapping> routes = new HashMap<>();
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
         for (String className : controllers) {
@@ -29,13 +31,21 @@ public class RouteLoader {
 
                 UrlMapping annotation = method.getAnnotation(UrlMapping.class);
                 String url = normalize(annotation.value());
+                String httpMethod = annotation.method().trim().toUpperCase();
 
-                // Cette URL est-elle deja prise par une autre methode ?
-                if (routes.containsKey(url)) {
-                    throw new DuplicateUrlException(url, routes.get(url));
+                if(!httpMethod.equals("GET") && !httpMethod.equals("POST")) {
+                    throw new IllegalArgumentException("Methode http non supportee: "
+                     + httpMethod);
                 }
 
-                routes.put(url, new Mapping(cls.getName(), method.getName()));
+                UrlMethod key = new UrlMethod(url, httpMethod);
+
+                // Cette URL est-elle deja prise par une autre methode ?
+                if (routes.containsKey(key)) {
+                    throw new DuplicateUrlException(url,httpMethod, routes.get(key));
+                }
+
+                routes.put(key, new Mapping(cls.getName(), method.getName()));
             }
         }
         return routes;
