@@ -17,6 +17,10 @@ public class EmpController {
     public void create() {
     }
 
+    @UrlMapping(value="/emp/new", method="POST")
+    public void enregistrer() {
+    }
+
     // Pas d'annotation : cette methode n'a PAS d'URL
     public void methodeInterne() {
     }

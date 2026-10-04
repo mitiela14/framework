@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,6 +10,34 @@
     <form action="http://localhost/8080/FrameworkTest/emp/save" method="post">
         <input type="text" name="nom" value="Me">
         <button type="submit">Envoyer (POST)</button>
+    </form>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Sprint 3 - POST</title>
+</head>
+<body>
+    <h2>Tests POST (ouvrir ce fichier directement depuis le disque, pas via Tomcat)</h2>
+
+    <h3>1. POST /emp/new &rarr; attendu : 200, EmpController.enregistrer()</h3>
+    <form action="http://localhost:8080/FrameworkTest/emp/new" method="POST">
+        <input type="text" name="nom" value="Jean">
+        <button type="submit">Envoyer</button>
+    </form>
+
+    <h3>2. POST /fruit/save &rarr; attendu : 200, FruitController.sauvegarder()</h3>
+    <form action="http://localhost:8080/FrameworkTest/fruit/save" method="POST">
+        <input type="text" name="nom" value="Mangue">
+        <button type="submit">Envoyer</button>
+    </form>
+
+    <h3>3. POST /emp/list &rarr; attendu : 404 (cette URL n'existe qu'en GET)</h3>
+    <form action="http://localhost:8080/FrameworkTest/emp/list" method="POST">
+        <button type="submit">Envoyer</button>
     </form>
 </body>
 </html>
