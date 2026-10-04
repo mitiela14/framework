@@ -6,19 +6,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.HashMap;
 import java.util.Comparator;
 
 import com.exception.UrlNotFoundException;
 import com.model.Mapping;
+import com.model.UrlMethod;
 import com.utils.ControllerScanner;
 import com.utils.RouteLoader;
-import com.model.UrlMethod;
-
 
 public class FrontControllerServlet extends HttpServlet {
 
@@ -66,6 +66,25 @@ public class FrontControllerServlet extends HttpServlet {
             throw new UrlNotFoundException(url, httpMethod);
         }
         return mapping;
+    }
+
+    private Object invokeController(Mapping mapping) throws ServletException {
+        try {
+            ClassLoader loader = Thread.currentThread().getContextClassLoader();
+            Class<?> cls = Class.forName(mapping.getClassName(), true, loader);
+            Object controller = cls.getDeclaredConstructor().newInstance();
+            Method method = cls.getDeclaredMethod(mapping.getMethod());
+            System.out.println("   [Sprint3] Appel de " + mapping);
+            return method.invoke(controller);
+        } catch (InvocationTargetException e) {
+
+            Throwable cause = e.getCause();
+            throw new ServletException("La methode " + mapping
+                    + " a lance une exception : " + cause, cause);
+        } catch (ReflectiveOperationException e) {
+
+            throw new ServletException("Impossible d'invoquer " + mapping + " : " + e, e);
+        }
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)

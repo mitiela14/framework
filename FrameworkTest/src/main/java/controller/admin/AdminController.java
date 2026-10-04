@@ -10,5 +10,6 @@ public class AdminController {
     // "sans slash" : le framework le normalise en /admin/home
     @UrlMapping("admin/home")
     public void accueil() {
+        System.out.println("AdminController.accueil() est appelee");
     }
 }
