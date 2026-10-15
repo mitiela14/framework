@@ -10,6 +10,17 @@
         <param-value>com.controller</param-value>
     </context-param>
 
+    <!-- On declare le listener qui vient de framework.jar -->
+    <listener>
+        <listener-class>com.listener.AppContextListener</listener-class>
+    </listener>
+
+    <!-- demonstration de l'ordre : initialise apres le listener -->
+    <filter>
+        <filter-name>OrdreFilter</filter-name>
+        <filter-class>com.demo.OrdreFilter</filter-class>
+    </filter>
+
     <!-- On declare le servlet qui vient de framework.jar -->
 
     <servlet>
