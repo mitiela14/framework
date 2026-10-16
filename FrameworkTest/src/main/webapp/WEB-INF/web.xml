@@ -20,6 +20,10 @@
         <filter-name>OrdreFilter</filter-name>
         <filter-class>com.demo.OrdreFilter</filter-class>
     </filter>
+    <filter-mapping>
+        <filter-name>OrdreFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
     <!-- On declare le servlet qui vient de framework.jar -->
 
