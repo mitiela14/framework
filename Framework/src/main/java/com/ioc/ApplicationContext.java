@@ -2,6 +2,8 @@ package com.ioc;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.lang.reflect.Field;
+import com.annotation.*;
 
 public class ApplicationContext {
     private Map<Class<?>, Object> singletons = new HashMap<>();
@@ -38,5 +40,4 @@ public class ApplicationContext {
     public Map<Class<?>, Object> getAllBeans() {
         return singletons;
     }
-}
 }
