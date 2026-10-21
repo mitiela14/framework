@@ -5,9 +5,6 @@ import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.ServletContext;
 
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +13,7 @@ import com.annotation.*;
 import com.ioc.ApplicationContext;
 import com.model.Mapping;
 import com.model.UrlMethod;
+import com.utils.PackageScanner;
 import com.utils.RouteLoader;
 
 @WebListener
@@ -34,10 +32,19 @@ public class AppContextListener implements ServletContextListener {
         if (viewSuffix == null) viewSuffix = ".jsp";
 
         try {
+            // 1. SCAN DU PACKAGE CONTROLEURS
+            List<Class<?>> allClasses = PackageScanner.scanClasses(packageToScan);
+            System.out.println("[SCAN] " + allClasses.size() + " classe(s) trouvee(s) dans " + packageToScan);
+
+            if (allClasses.isEmpty()) {
+                throw new RuntimeException("Aucune classe trouvee dans le package '" + packageToScan
+                        + "'. Verifie le <context-param> packageControllers dans web.xml "
+                        + "et que tes controleurs sont bien compiles dans WEB-INF/classes "
+                        + "(ou dans un JAR de WEB-INF/lib).");
+            }
+
             // 2. CREATION DU CONTENEUR IOC (UNE SEULE FOIS)
             ApplicationContext appContext = new ApplicationContext();
-
-            List<Class<?>> allClasses = scanPackage(packageToScan);
 
             // Enregistrer d'abord les Repository, puis Service, puis Controller
             for (Class<?> cls : allClasses) {
@@ -81,35 +88,5 @@ public class AppContextListener implements ServletContextListener {
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
         System.out.println("[INFO] Application arretee.");
-    }
-
-
-    // SCAN RECURSIF
-    private List<Class<?>> scanPackage(String packageName) throws Exception {
-        List<Class<?>> classes = new ArrayList<>();
-        String path = packageName.replace('.', '/');
-        URL resource = Thread.currentThread().getContextClassLoader().getResource(path);
-
-        if (resource == null) return classes;
-
-        File directory = new File(resource.getFile());
-        scanDirectory(directory, packageName, classes);
-        return classes;
-    }
-
-    private void scanDirectory(File directory, String packageName, List<Class<?>> classes)
-            throws ClassNotFoundException {
-        File[] files = directory.listFiles();
-        if (files == null) return;
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                scanDirectory(file, packageName + "." + file.getName(), classes);
-            } else if (file.getName().endsWith(".class")) {
-                String className = packageName + "."
-                        + file.getName().substring(0, file.getName().length() - 6);
-                classes.add(Class.forName(className));
-            }
-        }
     }
 }

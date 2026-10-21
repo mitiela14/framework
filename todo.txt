@@ -136,3 +136,40 @@ Sprint7 :
     Sprint7-bis :
         Binding autorises pour l'objet : c'est a dire une classe 
         prendre tous les arguments,boucler ,prendre la valeur 
+
+    *Sprint8 : UPLOAD DE FICHIERS [ok]
+        Ilay <input type="file"> : mila tonga any am parametre
+        anah methode (na ao anaty objet) ny fichier. Miampy type
+        vaovao ao am binding : MapFile (nom + type + octets) sy byte[]
+        (leh contenu binaire fotsiny).
+
+    Sprint 9 : session
+        ataovy izay ahatonga any le session any le utilisateur disponible ao anaty controlleur any le developpeur
+        controlleur dev :
+        comportement servlet , instance ray indrayy iany de in no mamaly requette retraretra , ao anaty contexte 
+        clé anarany le controlleur de valeur le instance 
+        de mijery hoe misy na tsia 
+        manisy attribut ao anaty controlleur 
+        parametre methode d'actions foana 
+        manaboatra class session atsika mahita aniny le parametre atsika de injectena 
+        raha ohatra ve isakiny methode d'actions izay mila session , de icree anio class io foana ve izy ? problem anah mémoire (il faut éviter)
+        class methode standard , afaka mi suppr ao anaty variable d'actions 
+        Map session 
+        pour chaque session ray iany , 
+        creer class ray mysession de misy map,string, objet , asiana methode utilitaire (micrecuperer variable )
+        type vaovao creen tsiak in apetraka aoa anaty methode d'actions 
+        de afaka milalao supp,retraretra 
+        cote framework : traintement paramettre , type session antsiak de micree instance => map ao anatiny fenoina a partir httppSession , boucle de apetraka ao
+        vita ny invoke de mila atao à jour le httpsession 
+        tazonmina ny anarany le variable nasina any le Map de in aveo no tsindrina amny in le httpsession rhf vita le invoke any le session 
+        tsindrina => bouclena fotsiny loa,tanjona mba tsy misy httppSession direct be any amny le développeur ,
+            le session loa no atao fa mbola tsy atao le instance loa
+            de jerena ny coté performance am larobia
+
+
+    Sprint 10 :
+    misy methode d'action : methode dans le controlleur du developpeur 
+    et parmi ses methodes il faudrait que la personne soit connecte 
+
+    Sprint 10bis : 
+    s'authentifier et selon le role qui peut executer quelques methodes

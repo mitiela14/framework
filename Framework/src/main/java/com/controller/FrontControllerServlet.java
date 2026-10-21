@@ -2,6 +2,7 @@ package com.controller;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -9,16 +10,29 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import com.annotation.JsonResponse;
+import com.annotation.UrlMapping;
+import com.binding.BindingResult;
+import com.binding.ParameterBinder;
+import com.exception.BindingException;
 import com.ioc.ApplicationContext;
 import com.model.Mapping;
 import com.model.ModelView;
 import com.model.UrlMethod;
+import com.session.SessionManager;
 import com.utils.JsonConverter;
 
 @WebServlet(name = "FrontController", urlPatterns = {"/"})
+@MultipartConfig(
+        maxFileSize = 10L * 1024 * 1024,      // 10 Mo maximum par fichier
+        maxRequestSize = 20L * 1024 * 1024,   // 20 Mo maximum pour toute la requete
+        fileSizeThreshold = 1024 * 1024       // au-dela de 1 Mo : stockage sur disque temporaire
+)
 public class FrontControllerServlet extends HttpServlet {
 
     private String viewPrefix;
@@ -66,25 +80,36 @@ public class FrontControllerServlet extends HttpServlet {
 
         // 3. Traitement de la route
         if (mappingUrls.containsKey(urlMethod)) {
+            String methodName = "";
             try {
                 Mapping mapping = mappingUrls.get(urlMethod);
                 Class<?> controllerClass = Class.forName(mapping.getClassName());
 
-                // CLe : recupere l'instance depuis le CONTENEUR (SINGLETON)
-                // au lieu de newInstance() a chaque requete (PROTOTYPE)
                 Object controller = appContext.getBean(controllerClass);
                 if (controller == null) {
                     throw new ServletException("Controller non trouve dans le conteneur : " + controllerClass.getName());
                 }
 
-                // Recuperation de la methode
-                String methodName = mapping.getMethod();
-                Method method = controllerClass.getDeclaredMethod(methodName);
+                methodName = mapping.getMethod();
+                Method method = findMethod(controllerClass, methodName, url, reqMethod);
 
-                // Invocation (le controller a deja ses @Autowired injectes)
-                Object result = method.invoke(controller);
+        
+                BindingResult binding = ParameterBinder.bind(method, request, response);
 
-                // WEB API
+            
+                for (Map.Entry<String, Object> e : binding.getValues().entrySet()) {
+                    request.setAttribute(e.getKey(), e.getValue());
+                }
+
+          
+                Object result;
+                try {
+                    result = method.invoke(controller, binding.getArguments());
+                } finally {
+                    
+                    SessionManager.synchroniser(request);
+                }
+
                 if (method.isAnnotationPresent(JsonResponse.class)
                         || controllerClass.isAnnotationPresent(JsonResponse.class)) {
                     response.setContentType("application/json;charset=UTF-8");
@@ -94,7 +119,7 @@ public class FrontControllerServlet extends HttpServlet {
                     return;
                 }
 
-                // Traitement ModelView
+                
                 if (result instanceof ModelView) {
                     ModelView mv = (ModelView) result;
 
@@ -109,13 +134,25 @@ public class FrontControllerServlet extends HttpServlet {
                     return;
 
                 } else {
-                    // Resultat brut (String, int, etc.)
+                   
                     response.setContentType("text/html;charset=UTF-8");
                     try (PrintWriter out = response.getWriter()) {
                         out.println("<h2>FrontController servlet</h2>");
                         out.println("<p><strong>Current URL:</strong> " + urlMain + "</p>");
                         out.println("<p>La methode a retourne : " + result + "</p>");
                     }
+                }
+
+            } catch (BindingException e) {
+
+                System.out.println("[BINDING][ERREUR] " + e.getMessage());
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.setContentType("text/html;charset=UTF-8");
+                try (PrintWriter out = response.getWriter()) {
+                    out.println("<h2>Erreur de binding (Sprint 7 / 7bis)</h2>");
+                    out.println("<p><strong>URL :</strong> " + html(url) + " [" + reqMethod + "]</p>");
+                    out.println("<p><strong>Methode :</strong> " + html(methodName) + "</p>");
+                    out.println("<pre>" + html(e.getMessage()) + "</pre>");
                 }
 
             } catch (Exception e) {
@@ -125,6 +162,57 @@ public class FrontControllerServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND,
                     "Aucune route trouvee pour l'URL : " + url + " [" + reqMethod + "]");
         }
+    }
+
+
+    private Method findMethod(Class<?> controllerClass, String methodName,
+                              String url, String httpMethod) throws NoSuchMethodException {
+
+        List<Method> memesNoms = new ArrayList<>();
+        for (Method m : controllerClass.getDeclaredMethods()) {
+            if (m.getName().equals(methodName)) memesNoms.add(m);
+        }
+
+        if (memesNoms.isEmpty()) {
+            throw new NoSuchMethodException(controllerClass.getName() + "." + methodName + "()");
+        }
+
+        // 1. celle qui porte exactement la route demandee
+        for (Method m : memesNoms) {
+            UrlMapping um = m.getAnnotation(UrlMapping.class);
+            if (um == null) continue;
+            if (um.value().equals(url) && um.method().equalsIgnoreCase(httpMethod)) {
+                m.setAccessible(true);
+                if (memesNoms.size() > 1) {
+                    System.out.println("[ROUTAGE] Surcharge de " + methodName + "() : on prend "
+                            + Arrays.toString(m.getParameterTypes()) + " (celle mappee sur "
+                            + url + " [" + httpMethod + "])");
+                }
+                return m;
+            }
+        }
+
+        // 2. sinon, celle dont tous les arguments peuvent etre lies
+        for (Method m : memesNoms) {
+            boolean tousLieables = true;
+            for (Class<?> type : m.getParameterTypes()) {
+                if (!ParameterBinder.isBindable(type)) { tousLieables = false; break; }
+            }
+            if (tousLieables) {
+                m.setAccessible(true);
+                return m;
+            }
+        }
+
+        // 3. aucune possibility : on rend la main, le binding signalera l'objet
+        Method premiere = memesNoms.get(0);
+        premiere.setAccessible(true);
+        return premiere;
+    }
+
+    private String html(String texte) {
+        if (texte == null) return "";
+        return texte.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     @Override
