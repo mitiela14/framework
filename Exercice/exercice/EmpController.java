@@ -1,13 +1,22 @@
-// package exercice;
+package exercice;
 
-// @Controleur
-// public class EmpController {
+import java.util.List;
 
-//     @UrlMapping("/emp/list")
-//     public void liste() { }
+// CONTROLEUR : recoit la requete, demande les donnees au service
+public class EmpController {
 
-//     @UrlMapping("/emp/new")
-//     public void create() { }
+    private EmpService service;
+    private int compteur = 0;     // etat : montre la difference singleton / prototype
 
-//     public void interne() { }          // pas d'URL
-// }
+    public EmpController(EmpService service) {
+        this.service = service;
+        System.out.println("      [EmpController] cree : @" + Integer.toHexString(System.identityHashCode(this)));
+    }
+
+    public String liste() {
+        compteur++;
+        List<Employe> employes = service.listerEmployes();
+        return "instance @" + Integer.toHexString(System.identityHashCode(this))
+                + ", appel numero " + compteur + ", employes = " + employes;
+    }
+}

@@ -91,3 +91,21 @@ To do Framework :
         - ModelandView 
         - recuperer ModelandView de mis map de alaina ny url de cocatenena de dispatcherforward de donnes ao map , 
     
+        sprint5bis : - integration du base de donnes ,
+    - controller cote dev : manana metgod list associer url /list  tia andefa donne -> 
+    - atao en dur list de objectif : raha mila mikitika cote framework dia aona ny atao rah tsy en dur fa via base de donnees tsy mampiasa oriente objet 
+    raha mapias spring de aoana , couche service couche repository dia miaraka entity , aona ny maha pety anizany zvtr zany ? 
+    - controller dia tsika no migerer azy rehefa misy appel dia instacier fona ny controller le izy 
+    en ce moment 
+    - scopping : prototype 
+    - atao singleton 
+    - controller gerern ny spring , conteneur ray , controller koa zany 
+    new class path xml -> demreer conteneur ray zay 
+    - demarrge appli web , conteur spring demmareer azy ra iany no demmarrer de ray iany no ampiasaina  
+    - accez au conteneur spring , a ne pas exclure le modification au niveau framework 
+    - tsy ato en dur tsony ny donnes fa ao anty base 
+    - mampiasa spring de izay 
+    -et 
+    -Conteneur spring dia indray mande ihany 
+    -tsy atao en dure fa avy anaty base
+    -spring misy couche Repository
