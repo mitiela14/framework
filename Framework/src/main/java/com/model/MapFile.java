@@ -4,30 +4,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-/**
- * SPRINT 8 : un fichier envoye par un formulaire <input type="file">.
- *
- * Le navigateur n'envoie pas "une chaine" mais un FICHIER : nom original,
- * type MIME et contenu binaire. Le framework fabrique un MapFile a partir
- * de la requete (multipart/form-data) et le donne au controleur, que ce soit
- * en parametre direct :
- *
- *     save(String nom, MapFile rectoCIN)          -> rectoCIN = MapFile
- *
- * ou bien comme CHAMP d'un objet metier :
- *
- *     save(Employe employe)  avec Employe.cinRecto de type MapFile
- *
- * "MapFile" = "fichier mis en map" : les metadonnees (nom, type, taille)
- * sont des valeurs simples, le contenu reste un byte[] (comme une base de
- * donnees le stockerait en BLOB).
- */
+
 public class MapFile {
 
-    private String fileName;      // nom d'origine : "cin-recto.png"
-    private String contentType;   // type MIME   : "image/png"
-    private long taille;          // taille en octets (0 si aucun fichier)
-    private byte[] contenu;       // LE FICHIER EN MEMOIRE (tableau d'octets)
+    private String fileName;      
+    private String contentType;   
+    private long taille;          
+    private byte[] contenu;       
 
     public MapFile() {
     }
@@ -69,19 +52,6 @@ public class MapFile {
         return (point < 0) ? "" : fileName.substring(point + 1);
     }
 
-    // =====================================================================
-    // SAUVEGARDE SUR LE SERVEUR
-    // =====================================================================
-
-    /**
-     * Ecrit le fichier dans le dossier donne et renvoie le chemin complet.
-     * Exemple : ecrire(ctx.getRealPath("/uploads"))
-     *           -> /opt/tomcat/webapps/FrameworkTest/uploads/cin-recto.png
-     *
-     * Le nom envoye par le navigateur est NETTOYE (nomSecurise) : on ne
-     * conserve que le dernier segment, sans ".." ni separateur, pour qu'un
-     * nom malicieux ne puisse pas ecrire en dehors du dossier.
-     */
     public String ecrire(String dossier) throws IOException {
         if (estVide()) {
             throw new IOException("aucun fichier a ecrire (MapFile vide)");
@@ -111,7 +81,6 @@ public class MapFile {
         return destination.getAbsolutePath();
     }
 
-    /** "C:/Users/x/cin..\\recto.png" -> "cin..recto.png" -> sans ".." -> securise. */
     private static String nomSecurise(String nom) {
         String propre = nom.replace('\\', '/');
         int dernier = propre.lastIndexOf('/');
