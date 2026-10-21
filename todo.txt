@@ -109,3 +109,30 @@ To do Framework :
     -Conteneur spring dia indray mande ihany 
     -tsy atao en dure fa avy anaty base
     -spring misy couche Repository
+
+    Sprint6 : web API [ok]
+        objectif: la methode d'action dans le controlleur ne doit pas fonctionner dans le vue quand on appelle l'url correspondant mais retourne seulement de json
+
+
+
+Sprint7 : 
+        Binding , ilay donnée tonga , donnée avany am vue de alefa any am controller 
+        manana formulaire na ajout , ao anaty formulaire de mclique button submit de makany am url 
+        methode save (raha employe de mandray argument employe) 
+        clique button de makao front servlet (mapafatatra le save , verifie methode mifanaraka)
+        verifie parametre 
+        mandray parametre emp
+        tode fatany le variable ao anaty requette 
+        ilay tsy objet no atao (string nom, int age ,.....)
+        raha misy objet de frose exception, par defaut atao null 
+        alaina ny valeur de in apetraka rehefa manao invoque 
+
+        trotra :
+        controller cote dev 
+        manana methode save parametre 3 ohatra 
+        atao null foana par defaut, alaina isany le argument any le methode de matchena le izy aveo 
+        de invoquena de le valeur le izy 
+
+    Sprint7-bis :
+        Binding autorises pour l'objet : c'est a dire une classe 
+        prendre tous les arguments,boucler ,prendre la valeur 
