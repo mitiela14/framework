@@ -1,58 +1,42 @@
 package exercice;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 public class Main {
 
-    static String prefixe = "/WEB-INF/Views/";
-    static String suffixe = ".jsp";
-
-    static ModelView afficherLesFruits() {
-        List<String> fruits = new ArrayList<>();
-        fruits.add("Pomme");
-        fruits.add("Banane");
-
-        ModelView mv = new ModelView("ListeFruits");
-        mv.addAttribute("titre", "Fruits de la saison");
-        mv.addAttribute("fruits", fruits);
-        return mv;
-    }
-
-    static String uneChaine() { return "Liste des employes"; }
-
-    static void rienDuTout()  { }
-
-    // ----- Ce que fait le servlet du Sprint 5 avec le resultat
-    static void traiter(Object result) {
-        Requete request = new Requete();
-
-        if (result instanceof ModelView) {                       // 1. est-ce un ModelView ?
-            ModelView mv = (ModelView) result;                   //    oui : on le "convertit"
-
-            for (Map.Entry<String, Object> e : mv.getData().entrySet()) {
-                request.setAttribute(e.getKey(), e.getValue());  // 2. donnees -> attributs de requete
-            }
-
-            String chemin = prefixe + mv.getUrl() + suffixe;     // 3. concatener
-            request.forward(chemin);                             // 4. forward
-
-        } else {
-            System.out.println("   pas de vue, valeur brute = " + result);
-        }
-    }
-
     public static void main(String[] args) {
-        System.out.println("1) la methode retourne un ModelView");
-        traiter(afficherLesFruits());
 
-        System.out.println("\n2) la methode retourne une chaine");
-        traiter(uneChaine());
+        // ===== 1. SANS conteneur : on fabrique tout a la main, A CHAQUE REQUETE (= prototype)
+        System.out.println("=== 1. Sans conteneur : new a chaque requete");
+        for (int requete = 1; requete <= 2; requete++) {
+            System.out.println("   requete " + requete + " :");
+            EmpController c = new EmpController(new EmpService(new EmpRepositoryMemoire()));
+            System.out.println("   -> " + c.liste());
+        }
 
-        System.out.println("\n3) la methode est void (invoke renverrait null)");
-        traiter(null);
+        // ===== 2. AVEC conteneur : tout est cree UNE FOIS (singleton)
+        System.out.println("\n=== 2. Avec conteneur : singletons");
+        MiniConteneur conteneur = new MiniConteneur();
+        conteneur.enregistrer(EmpRepository.class, EmpRepositoryMemoire.class);
 
-        System.out.println("\n4) null est-il un ModelView ?  " + (null instanceof ModelView));
+        for (int requete = 1; requete <= 3; requete++) {
+            System.out.println("   requete " + requete + " :");
+            EmpController c = conteneur.getBean(EmpController.class);
+            System.out.println("   -> " + c.liste());
+        }
+
+        // ===== 3. Changer la source des donnees : UNE SEULE ligne change
+        System.out.println("\n=== 3. On remplace le repository (memoire -> base) : ni le service ni le controleur ne changent");
+        MiniConteneur conteneur2 = new MiniConteneur();
+        conteneur2.enregistrer(EmpRepository.class, EmpRepositoryBase.class);     // <-- la seule ligne modifiee
+        System.out.println("   -> " + conteneur2.getBean(EmpController.class).liste());
+
+        // ===== 4. Scope prototype : le controleur est recree a chaque demande
+        System.out.println("\n=== 4. Controleur en prototype (le service et le repository restent des singletons)");
+        MiniConteneur conteneur3 = new MiniConteneur();
+        conteneur3.enregistrer(EmpRepository.class, EmpRepositoryMemoire.class);
+        conteneur3.enPrototype(EmpController.class);
+        for (int requete = 1; requete <= 2; requete++) {
+            System.out.println("   requete " + requete + " :");
+            System.out.println("   -> " + conteneur3.getBean(EmpController.class).liste());
+        }
     }
 }
