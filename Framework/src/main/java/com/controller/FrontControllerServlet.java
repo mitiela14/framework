@@ -84,8 +84,7 @@ public class FrontControllerServlet extends HttpServlet {
                 // Invocation (le controller a deja ses @Autowired injectes)
                 Object result = method.invoke(controller);
 
-                // WEB API : si la methode ou sa classe est annotee @JsonResponse,
-                // on retourne directement le resultat en JSON (aucune vue n'est rendue)
+                // WEB API
                 if (method.isAnnotationPresent(JsonResponse.class)
                         || controllerClass.isAnnotationPresent(JsonResponse.class)) {
                     response.setContentType("application/json;charset=UTF-8");
