@@ -1,29 +1,59 @@
 #!/bin/bash
-# Sprint 0 - Compile le framework , cree framework.jar, 
-# le copie dans le FrameworkTest/lib 
+
 SERVLET_API_JAR="../FrameworkTest/lib/servlet-api.jar"
 TARGET_LIB_DIR="../FrameworkTest/lib"
 JAR_NAME="framework.jar"
 
-echo "Nettoyage"
+SOURCES="sources.txt"
+
+echo "[1/4] Nettoyage local..."
 rm -rf bin
 mkdir -p bin
 
-echo "Compilation"
-find src/main/java -name "*.java" > sources.txt
-javac -encoding UTF-8 -d bin -cp "$SERVLET_API_JAR" @sources.txt
+echo "[2/4] Compilation globale du Framework..."
+find src/main/java -name "*.java" > "$SOURCES"
+
+javac -encoding UTF-8 -parameters -d bin -cp "$SERVLET_API_JAR" @"$SOURCES"
+
 if [ $? -ne 0 ]; then
-    echo "Erreur de compilation"
-    rm -f sources.txt
+    echo
+    echo "[ERRpackage com.controller; ApiController
+            EUR] La compilation a echoue !"
+    rm -f "$SOURCES"
     exit 1
 fi
-rm -f sources.txt
+# Suppression du fichier temporaire si tout s'est bien passe
+rm -f "$SOURCES"
+echo "[OK] Compilation reussie de toutes les classes."
 
-echo "Creation du jar"
+echo "[3/4] Creation du JAR..."
 jar -cf "$JAR_NAME" -C bin .
+if [ $? -ne 0 ]; then
+    echo "[ERREUR] Impossible de creer le fichier JAR."
+    exit 1
+fi
+echo "[OK] Fichier $JAR_NAME cree avec succes."
 
-echo "Copie vers le projet du test"
+echo "[4/4] Deploiement vers le projet de test..."
+# Verification si le dossier de destination existe, sinon on le cree
 mkdir -p "$TARGET_LIB_DIR"
+
+# Suppression de l'ancien JAR s'il existe
+if [ -f "$TARGET_LIB_DIR/$JAR_NAME" ]; then
+    echo "Suppression de l'ancien $JAR_NAME dans le dossier de test..."
+    rm -f "$TARGET_LIB_DIR/$JAR_NAME"
+fi
+
+# Copie du nouveau JAR
 cp "$JAR_NAME" "$TARGET_LIB_DIR/"
 
-echo "Termine : $TARGET_LIB_DIR/$JAR_NAME"
+if [ $? -ne 0 ]; then
+    echo "[ERREUR] Impossible de copier le JAR vers le dossier de test."
+    exit 1
+fi
+
+echo
+echo "============================================"
+echo "   Termine ! Framework deployee dans :"
+echo "   $TARGET_LIB_DIR/$JAR_NAME"
+echo "============================================"
