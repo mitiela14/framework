@@ -1,0 +1,175 @@
+To do Framework :
+
+    ** Sprint 0 : 
+        Objectif : N'importe quel url saisie dans le test passe 
+        dans la fonction processRequest puis donne (localhost/.../url_Saisie)
+
+        -FrontCOntrollerServlet 
+            -doGet et doPost -> appel un processRequest() -> out.print(url)
+            -script de deploiement .jar (convertis le framework en jar)
+            -faire des test (le .jar dans le test)
+
+        -Exercice : 
+            Spring MVC, webAPI
+            controlleur 
+            class EmpController annoter
+            @Controller
+                @getmapping
+            methode lister 
+
+            (@requestapping)   
+
+            ModelAndView
+
+            test class controlleur noter par notre propre annotation
+
+            ** apprendre l'annotation : creation d'une annotation, recuperation,
+            existance(class, methode, attribut), packaging (comme tous les packaging mais special)
+            les variables necessaires    
+
+            dans le projet de test : creation d'une annotation, place,
+            comment, test dans une class et main => au moment de l'annotation     
+
+
+    **Sprint1 :
+        but : creation de notre propre annotation : [ok]
+        on a deux choix donc dans un bout de code : 
+            -utiliser au demarrage du application (utiliser listener )
+            ou - au premiere applle frontControllerServlet(on uilisant init)
+                    FrontControllerServlet : list<String> listController 
+                        init() {recuperer parametre web.xml}
+                            annotation controller : -all / package 
+                        -annotation 
+                        -parcours 
+
+    ** Sprint 2 :
+        url mandeha de fatatra ny methode sy controlleur asocier url iny 
+            creeation annotion type type , 
+            mila variable 
+
+            @controlleur
+            class EmpCOntroller 
+
+            url="emp/list
+            @urlmapping ('/emp/list')
+            liste(){  }
+
+            /emp/list
+            /emp/new EmpController->create 
+
+            rehefa tsy fatatra dia asina throw oe tsy fatatra le url 
+
+
+        
+    *Sprint3 : but : le url saisie a une method post et get , on doit donc savoir sa methode si c 'est post ou get pour les methode (fonction) lors de ses execution dans le Controller [ok]
+        - dans la class UrlMapping : ajouter l 'attribut method ; Les method sont get ou post
+        - creation du class UrlMethod : URL , method(get/post)
+        - dans la class Mapping.java : Nomclass , method(fonction)
+        - mettre une Exception si les fonction on la meme method 
+        du coup : -on a un test Controller et un url test (on a pas le dois de faire cela)
+                    - Utiliser Map<url , > , map deviens une instance du Url method
+                    - utiliser , equals et hascote pour map pour gerer les fonction qui on la meme methode
+    Miantso methodeContentski de ra true de throws exception 
+
+    Test : any anaty le classMetod , mitovy ny class :  
+
+    *Sprint3Bis : 
+    on appelle le method et on recupere le method et on l' invoke , on verifie dans le console qu 'on la appelle 
+    quand on conait la method executer (invoke) sans creer l 'instance (dans le Processrequest)
+
+    - on boucle pour avoir  les contenus : class , method , 
+    - on instancie et faits println 
+
+
+    *SprintSpecial : 
+        - implementation du context listener : init() premier appelle , 
+        au demarrage du application le demmarge efa 
+        listener , filter , servelet 
+        - 
+
+    *Sprint5 : 
+        - ModelandView 
+        - recuperer ModelandView de mis map de alaina ny url de cocatenena de dispatcherforward de donnes ao map , 
+    
+        sprint5bis : - integration du base de donnes ,
+    - controller cote dev : manana metgod list associer url /list  tia andefa donne -> 
+    - atao en dur list de objectif : raha mila mikitika cote framework dia aona ny atao rah tsy en dur fa via base de donnees tsy mampiasa oriente objet 
+    raha mapias spring de aoana , couche service couche repository dia miaraka entity , aona ny maha pety anizany zvtr zany ? 
+    - controller dia tsika no migerer azy rehefa misy appel dia instacier fona ny controller le izy 
+    en ce moment 
+    - scopping : prototype 
+    - atao singleton 
+    - controller gerern ny spring , conteneur ray , controller koa zany 
+    new class path xml -> demreer conteneur ray zay 
+    - demarrge appli web , conteur spring demmareer azy ra iany no demmarrer de ray iany no ampiasaina  
+    - accez au conteneur spring , a ne pas exclure le modification au niveau framework 
+    - tsy ato en dur tsony ny donnes fa ao anty base 
+    - mampiasa spring de izay 
+    -et 
+    -Conteneur spring dia indray mande ihany 
+    -tsy atao en dure fa avy anaty base
+    -spring misy couche Repository
+
+    Sprint6 : web API [ok]
+        objectif: la methode d'action dans le controlleur ne doit pas fonctionner dans le vue quand on appelle l'url correspondant mais retourne seulement de json
+
+
+
+Sprint7 : 
+        Binding , ilay donnée tonga , donnée avany am vue de alefa any am controller 
+        manana formulaire na ajout , ao anaty formulaire de mclique button submit de makany am url 
+        methode save (raha employe de mandray argument employe) 
+        clique button de makao front servlet (mapafatatra le save , verifie methode mifanaraka)
+        verifie parametre 
+        mandray parametre emp
+        tode fatany le variable ao anaty requette 
+        ilay tsy objet no atao (string nom, int age ,.....)
+        raha misy objet de frose exception, par defaut atao null 
+        alaina ny valeur de in apetraka rehefa manao invoque 
+
+        trotra :
+        controller cote dev 
+        manana methode save parametre 3 ohatra 
+        atao null foana par defaut, alaina isany le argument any le methode de matchena le izy aveo 
+        de invoquena de le valeur le izy 
+
+    Sprint7-bis :
+        Binding autorises pour l'objet : c'est a dire une classe 
+        prendre tous les arguments,boucler ,prendre la valeur 
+
+    *Sprint8 : UPLOAD DE FICHIERS [ok]
+        Ilay <input type="file"> : mila tonga any am parametre
+        anah methode (na ao anaty objet) ny fichier. Miampy type
+        vaovao ao am binding : MapFile (nom + type + octets) sy byte[]
+        (leh contenu binaire fotsiny).
+
+    Sprint 9 : session
+        ataovy izay ahatonga any le session any le utilisateur disponible ao anaty controlleur any le developpeur
+        controlleur dev :
+        comportement servlet , instance ray indrayy iany de in no mamaly requette retraretra , ao anaty contexte 
+        clé anarany le controlleur de valeur le instance 
+        de mijery hoe misy na tsia 
+        manisy attribut ao anaty controlleur 
+        parametre methode d'actions foana 
+        manaboatra class session atsika mahita aniny le parametre atsika de injectena 
+        raha ohatra ve isakiny methode d'actions izay mila session , de icree anio class io foana ve izy ? problem anah mémoire (il faut éviter)
+        class methode standard , afaka mi suppr ao anaty variable d'actions 
+        Map session 
+        pour chaque session ray iany , 
+        creer class ray mysession de misy map,string, objet , asiana methode utilitaire (micrecuperer variable )
+        type vaovao creen tsiak in apetraka aoa anaty methode d'actions 
+        de afaka milalao supp,retraretra 
+        cote framework : traintement paramettre , type session antsiak de micree instance => map ao anatiny fenoina a partir httppSession , boucle de apetraka ao
+        vita ny invoke de mila atao à jour le httpsession 
+        tazonmina ny anarany le variable nasina any le Map de in aveo no tsindrina amny in le httpsession rhf vita le invoke any le session 
+        tsindrina => bouclena fotsiny loa,tanjona mba tsy misy httppSession direct be any amny le développeur ,
+            le session loa no atao fa mbola tsy atao le instance loa
+            de jerena ny coté performance am larobia
+
+
+    Sprint 10 :
+    misy methode d'action : methode dans le controlleur du developpeur 
+    et parmi ses methodes il faudrait que la personne soit connecte 
+
+    Sprint 10bis : 
+    s'authentifier et selon le role qui peut executer quelques methodes
