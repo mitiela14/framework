@@ -7,14 +7,21 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
+import com.annotation.Authenticated;
+import com.annotation.Authorized;
 import com.annotation.JsonResponse;
 import com.annotation.UrlMapping;
 import com.binding.BindingResult;
@@ -38,6 +45,8 @@ public class FrontControllerServlet extends HttpServlet {
     private String viewPrefix;
     private String viewSuffix;
     private ApplicationContext appContext; // LE CONTENEUR IOC (singleton)
+    private String authSessionKey;
+    private String roleSessionKey;
 
     @Override
     public void init() throws ServletException {
@@ -55,6 +64,18 @@ public class FrontControllerServlet extends HttpServlet {
 
         if (viewPrefix == null) viewPrefix = "/WEB-INF/Views/";
         if (viewSuffix == null) viewSuffix = ".jsp";
+
+        this.authSessionKey = ctx.getInitParameter("auth-session-key");
+        this.roleSessionKey = ctx.getInitParameter("role-session-key");
+        if (this.authSessionKey == null || this.authSessionKey.trim().isEmpty()) {
+            this.authSessionKey = "authenticated";
+        }
+        if (this.roleSessionKey == null || this.roleSessionKey.trim().isEmpty()) {
+            this.roleSessionKey = "role";
+        }
+
+        System.out.println("[SECURITY] auth-session-key='" + this.authSessionKey
+                + "', role-session-key='" + this.roleSessionKey + "'");
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -92,6 +113,10 @@ public class FrontControllerServlet extends HttpServlet {
 
                 methodName = mapping.getMethod();
                 Method method = findMethod(controllerClass, methodName, url, reqMethod);
+
+                if (!verifierAcces(controllerClass, method, request, response)) {
+                    return;
+                }
 
         
                 BindingResult binding = ParameterBinder.bind(method, request, response);
@@ -213,6 +238,114 @@ public class FrontControllerServlet extends HttpServlet {
     private String html(String texte) {
         if (texte == null) return "";
         return texte.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private boolean verifierAcces(Class<?> controllerClass, Method method,
+                                  HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        boolean exigeAuthentification = method.isAnnotationPresent(Authenticated.class)
+                || controllerClass.isAnnotationPresent(Authenticated.class)
+                || method.isAnnotationPresent(Authorized.class)
+                || controllerClass.isAnnotationPresent(Authorized.class);
+
+        HttpSession httpSession = request.getSession(false);
+        Object authValue = (httpSession == null) ? null : httpSession.getAttribute(this.authSessionKey);
+
+        if (exigeAuthentification && !estAuthentifie(authValue)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                    "Acces refuse: authentification requise (attribut session '"
+                            + this.authSessionKey + "').");
+            return false;
+        }
+
+        Authorized authorized = method.getAnnotation(Authorized.class);
+        if (authorized == null) {
+            authorized = controllerClass.getAnnotation(Authorized.class);
+        }
+
+        if (authorized != null) {
+            Set<String> rolesRequis = normaliserRoles(authorized.roles());
+            if (!rolesRequis.isEmpty()) {
+                Object roleValue = (httpSession == null) ? null : httpSession.getAttribute(this.roleSessionKey);
+                Set<String> rolesUtilisateur = extraireRoles(roleValue);
+                if (rolesUtilisateur.isEmpty() || !aUnRoleAutorise(rolesUtilisateur, rolesRequis)) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                            "Acces refuse: role(s) requis " + rolesRequis
+                                    + " (attribut session '" + this.roleSessionKey + "').");
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private boolean estAuthentifie(Object authValue) {
+        if (authValue == null) return false;
+        if (authValue instanceof Boolean) return (Boolean) authValue;
+        if (authValue instanceof String) {
+            String v = ((String) authValue).trim().toLowerCase(Locale.ROOT);
+            return "true".equals(v) || "1".equals(v) || "yes".equals(v)
+                    || "oui".equals(v) || "on".equals(v);
+        }
+        return true;
+    }
+
+    private Set<String> normaliserRoles(String[] roles) {
+        Set<String> resultat = new LinkedHashSet<>();
+        if (roles == null) return resultat;
+        for (String role : roles) {
+            if (role == null) continue;
+            String r = role.trim().toLowerCase(Locale.ROOT);
+            if (!r.isEmpty()) resultat.add(r);
+        }
+        return resultat;
+    }
+
+    private Set<String> extraireRoles(Object roleValue) {
+        Set<String> roles = new LinkedHashSet<>();
+        if (roleValue == null) return roles;
+
+        if (roleValue instanceof String) {
+            String[] morceaux = ((String) roleValue).split(",");
+            for (String m : morceaux) {
+                String r = m.trim().toLowerCase(Locale.ROOT);
+                if (!r.isEmpty()) roles.add(r);
+            }
+            return roles;
+        }
+
+        if (roleValue instanceof String[]) {
+            for (String role : (String[]) roleValue) {
+                if (role == null) continue;
+                String r = role.trim().toLowerCase(Locale.ROOT);
+                if (!r.isEmpty()) roles.add(r);
+            }
+            return roles;
+        }
+
+        if (roleValue instanceof Collection) {
+            for (Object item : (Collection<?>) roleValue) {
+                if (item == null) continue;
+                String r = String.valueOf(item).trim().toLowerCase(Locale.ROOT);
+                if (!r.isEmpty()) roles.add(r);
+            }
+            return roles;
+        }
+
+        String unique = String.valueOf(roleValue).trim().toLowerCase(Locale.ROOT);
+        if (!unique.isEmpty()) roles.add(unique);
+        return roles;
+    }
+
+    private boolean aUnRoleAutorise(Set<String> rolesUtilisateur, Set<String> rolesRequis) {
+        for (String role : rolesUtilisateur) {
+            if (rolesRequis.contains(role)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

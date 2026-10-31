@@ -1,43 +1,117 @@
 #!/bin/bash
 
-set -e
+SERVLET_API_JAR="../FrameworkTest/lib/servlet-api.jar"
+TARGET_LIB_DIR="../FrameworkTest/lib"
+JAR_NAME="framework.jar"
 
-APP_NAME="FrameworkTest"
-SRC_DIR="src/main/java"
-WEB_DIR="src/main/webapp"
-BUILD_DIR="build"
-LIB_DIR="lib"
-TOMCAT_WEBAPPS="${TOMCAT_WEBAPPS:-/home/elmitia/Documents/apache-tomcat-8.5.75/webapps}"
-SERVLET_API_JAR="$LIB_DIR/servlet-api.jar"
+SOURCES="sources.txt"
 
-echo "[1/4] Nettoyage et preparation de $BUILD_DIR ..."
-rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR/WEB-INF/classes" "$BUILD_DIR/WEB-INF/lib"
+echo "[1/4] Nettoyage local..."
+rm -rf bin
+mkdir -p bin
 
-echo "[2/4] Compilation des controleurs du projet de test ..."
-find "$SRC_DIR" -name "*.java" > sources.txt
-# -parameters : conserve le NOM des parametres des methodes (necessaire au binding du Sprint 7)
-javac -encoding UTF-8 -parameters \
-      -cp "$SERVLET_API_JAR:$LIB_DIR/*" \
-      -d "$BUILD_DIR/WEB-INF/classes" @sources.txt
-rm -f sources.txt
-echo "[OK] Compilation reussie."
+echo "[2/4] Compilation globale du Framework..."
+# Generation de la liste de tous les fichiers .java (recursif)
+find src/main/java -name "*.java" > "$SOURCES"
 
-echo "[3/4] Copie des fichiers web (web.xml, JSP) et du framework.jar ..."
-cp -r "$WEB_DIR"/* "$BUILD_DIR"/
-# On copie UNIQUEMENT framework.jar : servlet-api.jar est fourni par Tomcat
-cp "$LIB_DIR/framework.jar" "$BUILD_DIR/WEB-INF/lib/"
+javac -encoding UTF-8 -parameters -d bin -cp "$SERVLET_API_JAR:lib/framework.jar" @"$SOURCES"
+if [ $? -ne 0 ]; then
+    echo
+    echo "[ERRpackage com.controller;
 
-echo "[4/4] Creation du WAR et deploiement dans Tomcat ..."
-(cd "$BUILD_DIR" && jar -cvf "$APP_NAME.war" * > /dev/null)
-if [ -d "$TOMCAT_WEBAPPS" ]; then
-    cp "$BUILD_DIR/$APP_NAME.war" "$TOMCAT_WEBAPPS"/
-    echo "WAR copie dans $TOMCAT_WEBAPPS"
-else
-    echo "ATTENTION : $TOMCAT_WEBAPPS introuvable."
-    echo "Le WAR est prêt ici : $BUILD_DIR/$APP_NAME.war"
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.annotation.*;
+import com.model.ModelView;
+
+@AnnotationController
+public class ApiController {
+
+    @JsonResponse
+    @UrlMapping(value = "/api/fruits", method = "GET")
+    public List<String> listeFruitsJson() {
+        List<String> fruits = new ArrayList<>();
+        fruits.add("Pomme");
+        fruits.add("Banane");
+        fruits.add("Orange");
+        return fruits;
+    }
+
+    @JsonResponse
+    @UrlMapping(value = "/api/emp", method = "GET")
+    public Map<String, Object> empJson() {
+        Map<String, Object> emp = new HashMap<>();
+        emp.put("nom", "Rakoto");
+        emp.put("prenom", "Jean");
+        emp.put("age", 25);
+        emp.put("actif", true);
+        return emp;
+    }
+
+    @JsonResponse
+    @UrlMapping(value = "/api/objets", method = "GET")
+    public List<Object> listeObjetsJson() {
+        List<Object> objets = new ArrayList<>();
+        Map<String, Object> a = new HashMap<>();
+        a.put("id", 1);
+        a.put("nom", "Produit A");
+        Map<String, Object> b = new HashMap<>();
+        b.put("id", 2);
+        b.put("nom", "Produit B");
+        objets.add(a);
+        objets.add(b);
+        return objets;
+    }
+
+    // Sans @JsonResponse : comportement MVC classique (vue)
+    @UrlMapping(value = "/api/vue", method = "GET")
+    public ModelView vueNormale() {
+        ModelView mv = new ModelView("ListeFruits");
+        List<String> fruits = new ArrayList<>();
+        fruits.add("Pomme");
+        mv.getData().put("Fruits", fruits);
+        return mv;
+    }
+
+}EUR] La compilation a echoue !"
+    rm -f "$SOURCES"
+    exit 1
+fi
+# Suppression du fichier temporaire si tout s'est bien passe
+rm -f "$SOURCES"
+echo "[OK] Compilation reussie de toutes les classes."
+
+echo "[3/4] Creation du JAR..."
+jar -cf "$JAR_NAME" -C bin .
+if [ $? -ne 0 ]; then
+    echo "[ERREUR] Impossible de creer le fichier JAR."
+    exit 1
+fi
+echo "[OK] Fichier $JAR_NAME cree avec succes."
+
+echo "[4/4] Deploiement vers le projet de test..."
+# Verification si le dossier de destination existe, sinon on le cree
+mkdir -p "$TARGET_LIB_DIR"
+
+# Suppression de l'ancien JAR s'il existe
+if [ -f "$TARGET_LIB_DIR/$JAR_NAME" ]; then
+    echo "Suppression de l'ancien $JAR_NAME dans le dossier de test..."
+    rm -f "$TARGET_LIB_DIR/$JAR_NAME"
 fi
 
+# Copie du nouveau JAR
+cp "$JAR_NAME" "$TARGET_LIB_DIR/"
+
+if [ $? -ne 0 ]; then
+    echo "[ERREUR] Impossible de copier le JAR vers le dossier de test."
+    exit 1
+fi
+
+echo
 echo "============================================"
-echo "   Termine ! Redemarrez Tomcat si besoin."
+echo "   Termine ! Framework deployee dans :"
+echo "   $TARGET_LIB_DIR/$JAR_NAME"
 echo "============================================"

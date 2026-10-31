@@ -1,10 +1,14 @@
 package com.controller;
 
 import com.annotation.AnnotationController;
+import com.annotation.Authenticated;
+import com.annotation.Authorized;
 import com.annotation.JsonResponse;
 import com.annotation.UrlMapping;
 import com.model.ModelView;
 import com.session.MySession;
+
+import javax.servlet.http.HttpServletRequest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,6 +18,46 @@ import java.util.Map;
 
 @AnnotationController
 public class SessionController {
+
+    @UrlMapping(value = "/auth/login", method = "POST")
+    public ModelView login(MySession session, HttpServletRequest request, String username, String role) {
+        String authKey = request.getServletContext().getInitParameter("auth-session-key");
+        String roleKey = request.getServletContext().getInitParameter("role-session-key");
+        if (authKey == null || authKey.trim().isEmpty()) authKey = "authenticated";
+        if (roleKey == null || roleKey.trim().isEmpty()) roleKey = "role";
+
+        session.set(authKey, true);
+        session.set("username", (username == null || username.trim().isEmpty()) ? "invité" : username.trim());
+        session.set(roleKey, (role == null || role.trim().isEmpty()) ? "ETUDIANT" : role.trim());
+
+        return vue(session, "Authentification OK (Sprint 10)");
+    }
+
+    @UrlMapping(value = "/auth/logout", method = "GET")
+    public ModelView logout(MySession session, HttpServletRequest request) {
+        String authKey = request.getServletContext().getInitParameter("auth-session-key");
+        String roleKey = request.getServletContext().getInitParameter("role-session-key");
+        if (authKey == null || authKey.trim().isEmpty()) authKey = "authenticated";
+        if (roleKey == null || roleKey.trim().isEmpty()) roleKey = "role";
+
+        session.remove(authKey);
+        session.remove(roleKey);
+        session.remove("username");
+        return vue(session, "Utilisateur deconnecte");
+    }
+
+    @Authenticated
+    @UrlMapping(value = "/auth/profil", method = "GET")
+    public ModelView profil(MySession session) {
+        return vue(session, "Acces autorise: utilisateur authentifie (Sprint 10)");
+    }
+
+    @Authenticated
+    @Authorized(roles = {"PROF", "ADMIN"})
+    @UrlMapping(value = "/auth/espace-prof", method = "GET")
+    public ModelView espaceProf(MySession session) {
+        return vue(session, "Acces autorise: role PROF ou ADMIN (Sprint 10bis)");
+    }
 
     @UrlMapping(value = "/session/afficher", method = "GET")
     public ModelView afficher(MySession session) {
